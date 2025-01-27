@@ -4,15 +4,12 @@ from typing import Any, Dict, Optional, Sequence, Tuple
 
 
 class Module:
-    """Modules form a tree that store parameters and other
-    submodules. They make up the basis of neural network stacks.
-
+    """ 模块构成了一个树状结构，用于存储参数和其他子模块。它们是神经网络堆栈的基础。
+    
     Attributes
-    ----------
-        _modules : Storage of the child modules
-        _parameters : Storage of the module's parameters
-        training : Whether the module is in training mode or evaluation mode
-
+        _modules ：子模块
+        _parameters ：模块参数
+        training ：训练模式 or 评估模式
     """
 
     _modules: Dict[str, Module]
@@ -30,30 +27,42 @@ class Module:
         return list(m.values())
 
     def train(self) -> None:
-        """Set the mode of this module and all descendent modules to `train`."""
-        # TODO: Implement for Task 0.4.
-        raise NotImplementedError("Need to implement for Task 0.4")
+        """ 把模块树中全部模块设置为训练模式 """        
+        self.training = True
+        for module in self.modules():
+            module.train()
 
     def eval(self) -> None:
-        """Set the mode of this module and all descendent modules to `eval`."""
-        # TODO: Implement for Task 0.4.
-        raise NotImplementedError("Need to implement for Task 0.4")
+        """ 把模块树中全部模块设置为评估模式 """   
+        self.training = False
+        for module in self.modules():
+            module.eval()
+
+    def named_parameters_helper(self, module_name: str) :
+        named_params = []
+        
+        for name, param in self._parameters.items():
+            full_name = module_name + name
+            named_params.append((full_name, param))
+
+        for name, module in self._modules.items():
+            full_name = module_name + name + '.'
+            named_params.extend(module.named_parameters_helper(full_name))
+
+        return named_params
 
     def named_parameters(self) -> Sequence[Tuple[str, Parameter]]:
-        """Collect all the parameters of this module and its descendents.
+        return self.named_parameters_helper("")
 
-        Returns
-        -------
-            The name and `Parameter` of each ancestor parameter.
-
-        """
-        # TODO: Implement for Task 0.4.
-        raise NotImplementedError("Need to implement for Task 0.4")
 
     def parameters(self) -> Sequence[Parameter]:
-        """Enumerate over all the parameters of this module and its descendents."""
-        # TODO: Implement for Task 0.4.
-        raise NotImplementedError("Need to implement for Task 0.4")
+        """ 返回当前模块及其所有子模块中的所有参数 """
+        current_params = list(self._parameters.values())
+
+        for sub_module in self._modules.values():
+            current_params.extend(sub_module.parameters())
+
+        return current_params
 
     def add_parameter(self, k: str, v: Any) -> Parameter:
         """Manually add a parameter. Useful helper for scalar parameters.
